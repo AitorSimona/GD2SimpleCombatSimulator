@@ -4,9 +4,16 @@ using UnityEngine;
 
 public class CharacterList
 {
+    public struct Spell
+    {
+        public string name;
+        public uint damage;
+        public uint mana_cost;
+    }
+
     public struct Character
     {
-        public Character(string given_name, uint hp, uint atk, uint rge, uint sta, uint mana, uint spd)
+        public Character(string given_name, uint hp, uint atk, uint rge, uint sta, uint mana, uint spd, uint lvl = 0, bool mage = false)
         {
             name = given_name;
             HP = hp;
@@ -15,6 +22,19 @@ public class CharacterList
             stamina = sta;
             this.mana = mana;
             speed = spd;
+            level = lvl;
+            is_mage = mage;
+            is_freezed = false;
+            last_action = "none";
+        }
+
+        public void ModifyHP(uint value, bool add)
+        {
+            if(add)
+                HP += value;
+
+            else
+                HP -= value;
         }
 
         public string name;
@@ -24,6 +44,13 @@ public class CharacterList
         public uint stamina;
         public uint mana;
         public uint speed;
+        public uint level;
+        public bool is_mage;
+        public string last_action;
+
+
+
+        public bool is_freezed;
     }
 
     public enum Teams
@@ -32,10 +59,9 @@ public class CharacterList
         B
     }
 
+
     public void CreateTeam(List<CharacterList.Character> Team, Teams type)
     {
-        Team = new List<Character>();
-
         switch(type)
         {
             case Teams.A:
@@ -52,7 +78,7 @@ public class CharacterList
     void CreateTeamA(List<CharacterList.Character> Team)
     {
         // Fill team here
-        Character character1 = new Character("Protagonist",5,3,5,5,0,3);
+        Character character1 = new Character("Protagonist",5,3,5,5,0,3, 0, true);
         Team.Add(character1);
 
         Character character2 = new Character("Secondary1",10,5,1,3,0,2);
@@ -67,7 +93,7 @@ public class CharacterList
     void CreateTeamB(List<CharacterList.Character> Team)
     {
         // Fill team here
-        Character character1 = new Character("Antagonist",50,10,3,3,10,2);
+        Character character1 = new Character("Antagonist",50,10,3,3,10,2,0, true);
         Team.Add(character1);
 
         Character character2 = new Character("Minion1",8,4,1,3,0,2);
@@ -76,7 +102,7 @@ public class CharacterList
         Character character3 = new Character("Minion2",3,2,5,5,0,3);
         Team.Add(character3);
 
-        Character character4 = new Character("Minion3",3,5,3,1,5,1);
+        Character character4 = new Character("Minion3",3,5,3,1,5,1,0,true);
         Team.Add(character4);
 
         Debug.Log("Created Awesome characters: Team B");
