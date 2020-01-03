@@ -10,10 +10,15 @@ public class GameManager : MonoBehaviour
     public Dropdown PlayerB;
 
     uint iterations = 0;
-    uint max_charactersA = 3;
-    uint max_charactersB = 4;
+    uint count = 0;
+    uint steps = 0;
     int currentcharA = 0;
     int currentcharB = 0;
+
+    int PlayerAWins = 0;
+    int PlayerBWins = 0;
+
+    uint combats = 0;
 
     public InputField iters;
 
@@ -27,8 +32,8 @@ public class GameManager : MonoBehaviour
     public Toggle controlA;
     public Toggle controlB;
 
-    //public UnityEngine.UIElements.ScrollView output;
     public Text outputText;
+    public Text statsText;
 
     public Button Playbutton;
     public Button stepbutton;
@@ -62,8 +67,14 @@ public class GameManager : MonoBehaviour
         teams.Add("Allies",new List<CharacterList.Character>());
         teams.Add("Enemies", new List<CharacterList.Character>());
 
+        // --- Fill dropdowns ---
         options.Add("Allies");
+        PlayerA.AddOptions(options);
+
+        options.Clear();
         options.Add("Enemies");
+        PlayerB.AddOptions(options);
+
 
         // --- Create actions ---
         actions.Add("Attack");
@@ -80,9 +91,6 @@ public class GameManager : MonoBehaviour
         character_manager.CreateTeam(teams["Allies"], CharacterList.Teams.A);
         character_manager.CreateTeam(teams["Enemies"], CharacterList.Teams.B);
    
-        // --- Fill dropdowns ---
-        PlayerA.AddOptions(options);
-        PlayerB.AddOptions(options);
 
         // --- Set spells ---
         spellA = new CharacterList.Spell();
@@ -140,10 +148,32 @@ public class GameManager : MonoBehaviour
             CurrentCharacterB.enabled = false;
         }
 
-        currentA = teams[PlayerA.options[PlayerA.value].text][currentcharA];
-        currentB = teams[PlayerB.options[PlayerB.value].text][currentcharB];
-        CurrentCharacterA.text = currentA.name;
-        CurrentCharacterB.text = currentB.name;
+        if (currentcharA > teams[PlayerA.options[PlayerA.value].text].Count - 1)
+            currentcharA = 0;
+
+        if (currentcharB > teams[PlayerB.options[PlayerB.value].text].Count - 1)
+            currentcharB = 0;
+
+        if (teams[PlayerA.options[PlayerA.value].text].Count != 0)
+        {
+            currentA = teams[PlayerA.options[PlayerA.value].text][currentcharA];
+            CurrentCharacterA.text = currentA.GetName();
+        }
+        if (teams[PlayerB.options[PlayerB.value].text].Count != 0)
+        {
+            currentB = teams[PlayerB.options[PlayerB.value].text][currentcharB];
+            CurrentCharacterB.text = currentB.GetName();
+        }
+
+        // --- Update statistics panel ---
+        PrintStatistics();
+        
+    }
+
+    void PrintStatistics()
+    {
+        statsText.text = "Combat number: " + combats.ToString() + "\n"
+            + "PlayerA Wins: " + PlayerAWins.ToString() + "\n" + "PlayerB Wins: " + PlayerBWins.ToString();
 
     }
 
@@ -156,30 +186,73 @@ public class GameManager : MonoBehaviour
             iterations = result;
     }
 
+    void ResetVars()
+    {
+        combats = 0;
+        statsText.text = "";
+        iters.text = "0";
+        outputText.text = "Simulation End";
+        playing = false;
+        steps = 0;
+        count = 0;
+        PlayerBWins = 0;
+        PlayerAWins = 0;
+
+        // --- Check for dead ---
+        for (int i = 0; i < teams[PlayerA.options[PlayerA.value].text].Count; ++i)
+        {
+                teams[PlayerA.options[PlayerA.value].text][i].Reset();
+        }
+
+        for (int i = 0; i < teams[PlayerB.options[PlayerB.value].text].Count; ++i)
+        {
+                teams[PlayerB.options[PlayerB.value].text][i].Reset();
+        }
+
+        ResetTeams();
+
+    }
+
+    void ResetTeams()
+    {
+        teams["Allies"].Clear();
+        teams["Enemies"].Clear();
+        // --- Fill teams ---
+        character_manager.CreateTeam(teams["Allies"], CharacterList.Teams.A);
+        character_manager.CreateTeam(teams["Enemies"], CharacterList.Teams.B);
+    }
+
+
     public void Play()
     {
         playing = true;
+
+        ResetVars();
+
 
         if (iterations > 0)
         {
             Debug.Log("Starting simulation");
 
-            for (uint i = 0; i < iterations; ++i) 
+            for (uint i = 0; i < iterations * (teams[PlayerA.options[PlayerA.value].text].Count + teams[PlayerB.options[PlayerB.value].text].Count); ++ i) 
             {
-                Debug.Log("Iteration number: ");
-                Debug.Log(iterations);
+                count++;
 
                 SimulateCombat();
 
                 UpdateCurrentCharacters();
+
+                if (count > 50)
+                {
+                    count = 0;
+                    outputText.text = "";
+                }
             }
+
 
             iterations = 0;
         }
 
-        playing = false;
-        outputText.text = "Simulation End";
-        iters.text = "0";
     }
 
     public void Step()
@@ -188,39 +261,60 @@ public class GameManager : MonoBehaviour
 
         if (iterations > 0)
         {
+            count++;
+            steps++;
             Debug.Log("Stepping simulation");
             Debug.Log("Iteration number: ");
             Debug.Log(iterations);
 
             SimulateCombat();
+
             UpdateCurrentCharacters();
 
-            iterations -= 1;
+            if (count > 50)
+            {
+                count = 0;
+                outputText.text = "";
+            }
+
+
+            if (steps > teams[PlayerA.options[PlayerA.value].text].Count + teams[PlayerB.options[PlayerB.value].text].Count)
+            {
+                iterations -= 1;
+                steps = 0;
+            }
+
+            CheckDead();
         }
         else
         {
-            playing = false;
-            outputText.text = "Simulation End";
-            iters.text = "0";
+            ResetVars();
         }
     }
 
     void UpdateCurrentCharacters()
     {
+        CheckDead();
+
         currentcharA++;
         currentcharB++;
 
-        if (currentcharA > max_charactersA - 1)
+        if (currentcharA > teams[PlayerA.options[PlayerA.value].text].Count - 1)
             currentcharA = 0;
 
-        if (currentcharB > max_charactersB - 1)
+        if (currentcharB > teams[PlayerB.options[PlayerB.value].text].Count - 1)
             currentcharB = 0;
 
-        currentA = teams[PlayerA.options[PlayerA.value].text][currentcharA];
-        currentB = teams[PlayerB.options[PlayerB.value].text][currentcharB];
-
-        CurrentCharacterA.text = currentA.name;
-        CurrentCharacterB.text = currentB.name;
+        if (teams[PlayerA.options[PlayerA.value].text].Count != 0)
+        {
+            currentA = teams[PlayerA.options[PlayerA.value].text][currentcharA];
+            CurrentCharacterA.text = currentA.GetName();
+        }
+        if (teams[PlayerB.options[PlayerB.value].text].Count != 0)
+        {
+            currentB = teams[PlayerB.options[PlayerB.value].text][currentcharB];
+            CurrentCharacterB.text = currentB.GetName();
+        }
 
         // --- Update actions ---
         ActionA.ClearOptions();
@@ -238,10 +332,10 @@ public class GameManager : MonoBehaviour
         actionsB.Add("Defend");
         actionsB.Add("Use Item");
 
-        if (currentA.is_mage)
+        if (currentA.GetMage())
             actionsA.Add("Cast Spell");
 
-        if (currentB.is_mage)
+        if (currentB.GetMage())
             actionsB.Add("Cast Spell");
 
         ActionA.AddOptions(actionsA);
@@ -250,14 +344,41 @@ public class GameManager : MonoBehaviour
 
     void SimulateCombat()
     {
-        int randA = Random.Range(0, ActionA.options.Count-1);
-        int randB = Random.Range(0, ActionB.options.Count-1);
+        CheckDead();
 
-        currentA.last_action = "none";
-        currentB.last_action = "none";
+        // --- Update actions ---
+        ActionA.ClearOptions();
+        ActionB.ClearOptions();
 
+        List<string> actionsA = new List<string>();
+        List<string> actionsB = new List<string>();
 
-        if (currentA.HP > 0 && !currentA.is_freezed)
+        // --- Create actions ---
+        actionsA.Add("Attack");
+        actionsA.Add("Defend");
+        actionsA.Add("Use Item");
+
+        actionsB.Add("Attack");
+        actionsB.Add("Defend");
+        actionsB.Add("Use Item");
+
+        if (currentA.GetMage())
+            actionsA.Add("Cast Spell");
+
+        if (currentB.GetMage())
+            actionsB.Add("Cast Spell");
+
+        int randA = Random.Range(0, actionsA.Count-1);
+        int randB = Random.Range(0, actionsB.Count-1);
+
+        if (controlA.isOn == true)
+            randA = ActionA.value;
+        if (controlB.isOn == true)
+            randB = ActionB.value;
+
+        currentA.SetLastAction("none");
+
+        if (currentA.GetHP() > 0 && !currentA.GetFreezed())
         {
             switch (randA)
             {
@@ -266,21 +387,78 @@ public class GameManager : MonoBehaviour
                     break;
 
                 case 1:
-                    currentA.last_action = "Defend";
-                    outputText.text = outputText.text + "\n" + currentA.name + "Uses Defend";
+                    currentA.SetLastAction("Defend");
+                    outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Defend";
                     break;
 
                 case 2:
-                    outputText.text = outputText.text + "\n" + currentA.name + "Uses Item";
+
+                    if (currentA.GetItem().name == "HP potion")
+                    {
+                        currentA.ModifyHP(currentA.GetItem().damage, true);
+                    }
+                    else
+                    {
+                        if (teams[PlayerB.options[PlayerB.value].text].Count != 0)
+                        {
+                            int randAttack = Random.Range(0, teams[PlayerB.options[PlayerB.value].text].Count - 1);
+
+                            if (teams[PlayerB.options[PlayerB.value].text][randAttack].GetLastAction() == "Defend")
+                                teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)currentA.GetItem().damage / 2, false);
+                            else
+                                teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)currentA.GetItem().damage, false);
+                        }
+                    }
+
+                    outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Item: " + currentA.GetItem().name;
+
                     break;
 
                 case 3:
+                    if (currentA.GetSpell().name != "none")
+                    {
+
+                        if (teams[PlayerB.options[PlayerB.value].text].Count != 0 && currentA.GetMana() >= currentA.GetSpell().mana_cost)
+                        {
+                            int randAttack = Random.Range(0, teams[PlayerB.options[PlayerB.value].text].Count - 1);
+
+                            if (currentA.GetSpell().name != "ConeOfCold")
+                            {
+                                teams[PlayerB.options[PlayerB.value].text][randAttack].SetFreezed(true);
+                            }
+                            else
+                            {
+                                if (teams[PlayerB.options[PlayerB.value].text][randAttack].GetLastAction() == "Defend")
+                                    teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)currentA.GetSpell().damage / 2, false);
+                                else
+                                    teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)currentA.GetSpell().damage, false);
+                            }
+
+
+                            currentA.ModifyMana((int)currentA.GetSpell().mana_cost);
+
+
+                        }
+
+                        if (currentA.GetMana() >= currentA.GetSpell().mana_cost)
+                            outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Spell: " + currentA.GetSpell().name;
+                        else
+                            outputText.text = outputText.text + "\n" + currentA.GetName() + "Cannot use spell: " + currentA.GetSpell().name;
+
+                    }
                     break;
             }
 
         }
+        else if (currentA.GetFreezed())
+        {
+            outputText.text = outputText.text + "\n" + currentA.GetName() + " Is Freezed!";
+            currentA.SetFreezed(false);
+        }
 
-        if (currentB.HP > 0 && !currentB.is_freezed)
+        currentB.SetLastAction("none");
+
+        if (currentB.GetHP() > 0 && !currentB.GetFreezed())
         {
             switch (randB)
             {
@@ -289,17 +467,130 @@ public class GameManager : MonoBehaviour
                     break;
 
                 case 1:
-                    currentA.last_action = "Defend";
-                    outputText.text = outputText.text + "\n" + currentB.name + "Uses Defend";
+                    currentB.SetLastAction("Defend");
+                    outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Defend";
                     break;
 
                 case 2:
+
+                    if (currentB.GetItem().name == "HP potion")
+                    {
+                        currentB.ModifyHP(currentB.GetItem().damage, true);
+                    }
+                    else
+                    {
+                        if (teams[PlayerA.options[PlayerA.value].text].Count != 0)
+                        {
+                            int randAttack = Random.Range(0, teams[PlayerA.options[PlayerA.value].text].Count - 1);
+
+                            if (teams[PlayerA.options[PlayerA.value].text][randAttack].GetLastAction() == "Defend")
+                                teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)currentB.GetItem().damage / 2, false);
+                            else
+                                teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)currentB.GetItem().damage, false);
+                        }
+                    }
+
+                    outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Item: " + currentB.GetItem().name;
 
                     break;
 
                 case 3:
 
+                    if (currentB.GetSpell().name != "none")
+                    {
+                        if (teams[PlayerA.options[PlayerA.value].text].Count != 0 && currentB.GetMana() >= currentB.GetSpell().mana_cost)
+                        {
+                            int randAttack = Random.Range(0, teams[PlayerA.options[PlayerA.value].text].Count - 1);
+
+                            if (currentB.GetSpell().name != "ConeOfCold")
+                            {
+                                teams[PlayerA.options[PlayerA.value].text][randAttack].SetFreezed(true);
+                            }
+                            else
+                            {
+                                if (teams[PlayerA.options[PlayerA.value].text][randAttack].GetLastAction() == "Defend")
+                                    teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)currentB.GetSpell().damage / 2, false);
+                                else
+                                    teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)currentB.GetSpell().damage, false);
+                            }
+
+                            currentB.ModifyMana((int)currentB.GetSpell().mana_cost);
+                        }
+
+                        if (currentB.GetMana() >= currentB.GetSpell().mana_cost)
+                            outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Spell: " + currentB.GetSpell().name;
+                        else
+                            outputText.text = outputText.text + "\n" + currentB.GetName() + "Cannot use spell: " + currentB.GetSpell().name;
+
+                    }
                     break;
+            }
+        }
+        else if (currentB.GetFreezed())
+        {
+            outputText.text = outputText.text + "\n" + currentB.GetName() + " Is Freezed!";
+            currentB.SetFreezed(false);
+        }
+
+
+    }
+
+    void CheckDead()
+    {
+        bool new_combat = false;
+
+        if (teams[PlayerA.options[PlayerA.value].text].Count == 0)
+        {
+            new_combat = true;
+            PlayerBWins++;
+        }
+        else if (teams[PlayerB.options[PlayerB.value].text].Count == 0)
+        {
+            new_combat = true;
+            PlayerAWins++;
+        }
+
+        if (new_combat)
+        {
+            combats++;
+            outputText.text = outputText.text + "\n" + "COMBAT END" + combats.ToString();
+
+            ResetTeams();
+        }
+
+        // --- Check for dead ---
+        for (int i = 0; i < teams[PlayerA.options[PlayerA.value].text].Count; ++i)
+        {
+
+            if (new_combat)
+                teams[PlayerA.options[PlayerA.value].text][i].Reset();
+
+            else if (teams[PlayerA.options[PlayerA.value].text][i].GetHP() <= 0)
+            {
+                if (teams[PlayerA.options[PlayerA.value].text][i].GetDead() == false)
+                {
+                    teams[PlayerA.options[PlayerA.value].text][i].SetDead(true);
+                    teams[PlayerA.options[PlayerA.value].text].Remove(teams[PlayerA.options[PlayerA.value].text][i]);
+                }
+
+            }
+
+        }
+
+        for (int i = 0; i < teams[PlayerB.options[PlayerB.value].text].Count; ++i)
+        {
+
+            if (new_combat)
+                teams[PlayerB.options[PlayerB.value].text][i].Reset();
+
+            else if (teams[PlayerB.options[PlayerB.value].text][i].GetHP() <= 0)
+            {
+                if (teams[PlayerB.options[PlayerB.value].text][i].GetDead() == false)
+                {
+                    teams[PlayerB.options[PlayerB.value].text][i].SetDead(true);
+                    teams[PlayerB.options[PlayerB.value].text].Remove(teams[PlayerB.options[PlayerB.value].text][i]);
+                }
+
             }
         }
 
@@ -307,35 +598,32 @@ public class GameManager : MonoBehaviour
 
     void Attack(CharacterList.Character current)
     {
-        if (current.name == currentA.name)
+        if (current.GetName() == currentA.GetName() && teams[PlayerB.options[PlayerB.value].text].Count != 0)
         {
-            int randAttack = Random.Range(0, PlayerB.options.Count - 1);
+            int randAttack = Random.Range(0, teams[PlayerB.options[PlayerB.value].text].Count - 1);
 
-            if (teams[PlayerB.options[PlayerB.value].text][randAttack].last_action == "Defend")
-                teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP(current.attack / 2, false);
+            if (teams[PlayerB.options[PlayerB.value].text][randAttack].GetLastAction() == "Defend")
+                teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)current.GetAttack() / 2, false);
             else
-                teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP(current.attack, false);
+                teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)current.GetAttack(), false);
 
-            outputText.text = outputText.text + "\n" + currentA.name + "Uses Attack" + teams[PlayerB.options[PlayerB.value].text][randAttack].name;
+            outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Attack on " + teams[PlayerB.options[PlayerB.value].text][randAttack].GetName();
 
         }
-        else
+        else if (teams[PlayerA.options[PlayerA.value].text].Count != 0)
         {
-            int randAttack = Random.Range(0, PlayerA.options.Count - 1);
+            int randAttack = Random.Range(0, teams[PlayerA.options[PlayerA.value].text].Count - 1);
 
-            if (teams[PlayerA.options[PlayerA.value].text][randAttack].last_action == "Defend")
-                teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP(current.attack / 2, false);
+            if (teams[PlayerA.options[PlayerA.value].text][randAttack].GetLastAction() == "Defend")
+                teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)current.GetAttack() / 2, false);
             else
-                teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP(current.attack, false);
+                teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)current.GetAttack(), false);
 
-            outputText.text = outputText.text + "\n" + currentB.name + "Uses Attack" + teams[PlayerA.options[PlayerA.value].text][randAttack].name;
+            outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Attack on " + teams[PlayerA.options[PlayerA.value].text][randAttack].GetName();
 
         }
 
     }
 
-    void PrintStatistics()
-    {
 
-    }
 }
