@@ -34,18 +34,19 @@ public class CharacterList
 
     public class Character
     {
-        public Character(string given_name, uint hp, uint atk, uint rge, uint sta, int mana, uint spd, Item it, Spell sp,uint lvl = 0, bool mage = false)
+        public Character(string given_name, uint hp, uint atk, uint rge, uint sta, int mana, uint spd, int xp, Item it, Spell sp,uint lvl = 1, bool mage = false)
         {
             name = given_name;
             HP = (int)hp;
-            maxHP = hp;
+            maxHP = maxHPref = hp;
             attack = atk;
             range = rge;
             stamina = (int)sta;
-            maxSTA = sta;
+            maxSTA = maxSTAref = sta;
             this.mana = mana;
-            maxMana = mana;
+            maxMana = maxManaref = mana;
             speed = spd;
+            maxSPDref = (int)speed;
             level = lvl;
             is_mage = mage;
             is_freezed = false;
@@ -54,6 +55,13 @@ public class CharacterList
             item_used = false;
             spell = sp;
             item = it;
+            XP = xp;
+
+            // Uncomment to force level (remember to set force_level var in game manager to true)
+            //ModifyLevel(19);
+
+
+            ModifyLevel(0);
         }
 
         public void ModifyHP(int value, bool add)
@@ -87,7 +95,86 @@ public class CharacterList
 
         public void ModifyLevel(uint value)
         {
+            // value will always be 1 (except when forcing a certain level)
+
+            if(name == "protagonist")
+            {
+                // HP
+                HP++;
+                maxHP++;
+
+                // attack
+                if (level == 3 || level == 6 || level == 9 || level == 12
+                    || level == 15 || level == 18 || level == 20)
+                    attack++;
+
+                // Stamina
+                if (level == 1 || level == 3 || level == 5 || level == 7
+                 || level == 9 || level == 11 || level == 13 || level == 15 || level == 17
+                 || level == 19)
+                    stamina++;
+
+                // Speed
+                if (level == 5 || level == 10 || level == 15 || level == 20)
+                    speed++;
+            }
+            else if(name == "secondary1")
+            {
+                HP += 1;
+                maxHP += 1;
+
+                // attack
+                if (level == 4 || level == 5 || level == 9 || level == 10
+                    || level == 14 || level == 15)
+                    attack++;
+
+                if (level == 19 || level == 20)
+                    attack += 2;
+
+                // Stamina
+                if (level == 1 || level == 2 || level == 3 || level == 6
+                 || level == 7 || level == 8 || level == 11 || level == 12 || level == 13
+                 || level == 16 || level == 17 || level == 18)
+                    stamina++;
+
+                // Speed
+                if (level == 5 || level == 10 || level == 15)
+                    speed++;
+            }
+            else
+            {
+                mana++;
+                maxMana++;
+
+                if (level < 13)
+                {
+                    HP += 1;
+                    maxHP += 1;
+                }
+
+                // attack
+                if (level == 1 || level == 3 || level == 5 || level == 7
+                    || level == 9 || level == 11 || level == 15 || level == 19)
+                    attack++;
+            }
+
             level += value;
+        }
+
+        public void ResetLevelAndXP()
+        {
+            level = 1;
+            XP = 0;
+            HP = (int)maxHPref;
+            mana = maxManaref;
+            stamina = (int)maxSTAref;
+            speed = (uint)maxSPDref;
+            attack = (uint)maxATKref;
+        }
+
+        public void ModifyXP(int value)
+        {
+            XP += value;
         }
 
         public uint GetLevel()
@@ -155,6 +242,11 @@ public class CharacterList
             return stamina;
         }
 
+        public int GetXP()
+        {
+            return XP;
+        }
+
         public uint GetRange()
         {
             return range;
@@ -210,6 +302,12 @@ public class CharacterList
         uint maxHP;
         int maxMana;
         uint maxSTA;
+        uint maxHPref;
+        int maxManaref;
+        uint maxSTAref;
+        int maxSPDref;
+        int maxATKref;
+        int XP;
 
         Item item;
         Spell spell;
@@ -254,13 +352,13 @@ public class CharacterList
         Spell bolt = new Spell("Bolt", 7, 7);
         Spell coneofcold = new Spell("ConeOfCold", 7, 7);
 
-        Character character1 = new Character("Protagonist",5,3,5,5,0,3,fire_bomb, none);
+        Character character1 = new Character("Protagonist",5,3,5,5,0,3,0,fire_bomb, none);
         Team.Add(character1);
 
-        Character character2 = new Character("Secondary1",10,5,1,3,0,2,potion,none);
+        Character character2 = new Character("Secondary1",10,5,1,3,0,2,0,potion,none);
         Team.Add(character2);
 
-        Character character3 = new Character("Secondary2",5,7,3,1,5,1,potion,coneofcold,0,true);
+        Character character3 = new Character("Secondary2",5,7,3,1,5,1,0,potion,coneofcold,1,true);
         Team.Add(character3);
 
         Debug.Log("Created Awesome characters: Team A");
@@ -277,16 +375,16 @@ public class CharacterList
         Spell coneofcold = new Spell("ConeOfCold", 7, 7);
 
         // Fill team here
-        Character character1 = new Character("Antagonist",50,10,3,3,10,2, fire_bomb, bolt, 0, true);
+        Character character1 = new Character("Antagonist",50,10,3,3,10,2,3000,fire_bomb, bolt, 1, true);
         Team.Add(character1);
 
-        Character character2 = new Character("Minion1",8,4,1,3,0,2, potion, none);
+        Character character2 = new Character("Minion1",8,4,1,3,0,2,200, potion, none);
         Team.Add(character2);
 
-        Character character3 = new Character("Minion2",3,2,5,5,0,3, potion, none);
+        Character character3 = new Character("Minion2",3,2,5,5,0,3,300, potion, none);
         Team.Add(character3);
 
-        Character character4 = new Character("Minion3",3,5,3,1,5,1,potion, coneofcold,0, true);
+        Character character4 = new Character("Minion3",3,5,3,1,5,1,500,potion, coneofcold,1, true);
         Team.Add(character4);
 
         Debug.Log("Created Awesome characters: Team B");

@@ -19,6 +19,10 @@ public class GameManager : MonoBehaviour
     int PlayerBWins = 0;
 
     uint combats = 0;
+    int maxLevel = 20;
+
+    // IMPORTANT: disables level progression if true
+    bool force_level = true;
 
     public InputField iters;
 
@@ -42,7 +46,7 @@ public class GameManager : MonoBehaviour
 
     uint maxSPD = 10;
     uint STACostperatk = 3;
-    uint STARecoveredperturn = 3;
+    uint STARecoveredperturn = 1;
 
     // --- Characters ---
     CharacterList character_manager;
@@ -206,6 +210,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < teams[PlayerA.options[PlayerA.value].text].Count; ++i)
         {
                 teams[PlayerA.options[PlayerA.value].text][i].Reset();
+                teams[PlayerA.options[PlayerA.value].text][i].ResetLevelAndXP();
         }
 
         for (int i = 0; i < teams[PlayerB.options[PlayerB.value].text].Count; ++i)
@@ -550,6 +555,9 @@ public class GameManager : MonoBehaviour
         }
 
 
+        // --- Recover Stamina ---
+        currentA.ModifySTA(1, true);
+        currentB.ModifySTA(1, true);
     }
 
     void CheckDead()
@@ -635,6 +643,32 @@ public class GameManager : MonoBehaviour
                     outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Attack on " + teams[PlayerB.options[PlayerB.value].text][randAttack].GetName();
 
                 }
+                
+
+            // --- Assign XP, level up, only for allies ---
+            currentA.ModifyXP(teams[PlayerB.options[PlayerB.value].text][randAttack].GetXP());
+
+            float to_levelup = 0.0f;
+            bool levelup = true;
+
+            while (!force_level && levelup && currentA.GetLevel() != maxLevel)
+            {
+                // for this new level
+                to_levelup = Mathf.Pow(50 * 1.2f, currentA.GetLevel());
+
+                if (currentA.GetXP() > to_levelup)
+                    currentA.ModifyLevel(1);
+
+                // up until this level
+                float total_XP = 0.0f;
+
+                for(uint i = 0; i < currentA.GetLevel(); ++i)
+                {
+                    total_XP += Mathf.Pow(50 * 1.2f, i);
+                }
+
+                levelup = currentA.GetXP() > total_XP;
+            }
 
             }
             else if (teams[PlayerA.options[PlayerA.value].text].Count != 0)
