@@ -41,7 +41,8 @@ public class CharacterList
             maxHP = hp;
             attack = atk;
             range = rge;
-            stamina = sta;
+            stamina = (int)sta;
+            maxSTA = sta;
             this.mana = mana;
             maxMana = mana;
             speed = spd;
@@ -50,6 +51,7 @@ public class CharacterList
             is_freezed = false;
             last_action = "none";
             was_dead = false;
+            item_used = false;
             spell = sp;
             item = it;
         }
@@ -66,9 +68,31 @@ public class CharacterList
                 HP = (int)maxHP;
         }
 
+        public void ModifySTA(int value, bool add)
+        {
+            if (add)
+                stamina += value;
+
+            else
+                stamina -= value;
+
+            if (stamina > maxSTA)
+                stamina = (int)maxSTA;
+        }
+
         public void ModifyMana(int value)
         {
                 mana -= value;
+        }
+
+        public void ModifyLevel(uint value)
+        {
+            level += value;
+        }
+
+        public uint GetLevel()
+        {
+            return level;
         }
 
         public int GetHP()
@@ -91,6 +115,11 @@ public class CharacterList
             return was_dead;
         }
 
+        public bool GetItemUsed()
+        {
+            return item_used;
+        }
+
         public void SetFreezed(bool value)
         {
            is_freezed = value;
@@ -101,6 +130,11 @@ public class CharacterList
             was_dead = value;
         }
 
+        public void SetItemUsed(bool value)
+        {
+            item_used = value;
+        }
+
         public uint GetAttack()
         {
             return attack;
@@ -109,6 +143,21 @@ public class CharacterList
         public int GetMana()
         {
             return mana;
+        }
+
+        public uint GetSpeed()
+        {
+            return speed;
+        }
+
+        public int GetStamina()
+        {
+            return stamina;
+        }
+
+        public uint GetRange()
+        {
+            return range;
         }
 
         public string GetName()
@@ -144,13 +193,15 @@ public class CharacterList
             last_action = "none";
             was_dead = false;
             mana = maxMana;
+            item_used = false;
+            stamina = (int)maxSTA;
         }
 
         string name;
         int HP;
         uint attack;
         uint range;
-        uint stamina;
+        int stamina;
         int mana;
         uint speed;
         uint level;
@@ -158,6 +209,7 @@ public class CharacterList
 
         uint maxHP;
         int maxMana;
+        uint maxSTA;
 
         Item item;
         Spell spell;
@@ -165,6 +217,7 @@ public class CharacterList
         bool is_mage;
         bool is_freezed;
         bool was_dead;
+        bool item_used;
     }
 
     public enum Teams

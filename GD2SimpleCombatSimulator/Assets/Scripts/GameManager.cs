@@ -40,6 +40,10 @@ public class GameManager : MonoBehaviour
 
     bool playing = false;
 
+    uint maxSPD = 10;
+    uint STACostperatk = 3;
+    uint STARecoveredperturn = 3;
+
     // --- Characters ---
     CharacterList character_manager;
 
@@ -354,16 +358,27 @@ public class GameManager : MonoBehaviour
         List<string> actionsB = new List<string>();
 
         // --- Create actions ---
-        actionsA.Add("Attack");
-        actionsA.Add("Defend");
-        actionsA.Add("Use Item");
 
-        actionsB.Add("Attack");
-        actionsB.Add("Defend");
-        actionsB.Add("Use Item");
+        // A
+        if (currentA.GetStamina() >= STACostperatk)
+            actionsA.Add("Attack");
+
+        actionsA.Add("Defend");
+
+        if (currentA.GetItemUsed() == false)
+            actionsA.Add("Use Item");
 
         if (currentA.GetMage())
             actionsA.Add("Cast Spell");
+        // B
+
+        if (currentB.GetStamina() >= STACostperatk)
+            actionsB.Add("Attack");
+
+        actionsB.Add("Defend");
+
+        if (currentB.GetItemUsed() == false)
+            actionsB.Add("Use Item");
 
         if (currentB.GetMage())
             actionsB.Add("Cast Spell");
@@ -392,6 +407,7 @@ public class GameManager : MonoBehaviour
                     break;
 
                 case 2:
+                    currentA.SetItemUsed(true);
 
                     if (currentA.GetItem().name == "HP potion")
                     {
@@ -472,6 +488,7 @@ public class GameManager : MonoBehaviour
                     break;
 
                 case 2:
+                    currentB.SetItemUsed(true);
 
                     if (currentB.GetItem().name == "HP potion")
                     {
@@ -598,30 +615,46 @@ public class GameManager : MonoBehaviour
 
     void Attack(CharacterList.Character current)
     {
-        if (current.GetName() == currentA.GetName() && teams[PlayerB.options[PlayerB.value].text].Count != 0)
-        {
-            int randAttack = Random.Range(0, teams[PlayerB.options[PlayerB.value].text].Count - 1);
+            current.ModifySTA((int)STACostperatk, false);
 
-            if (teams[PlayerB.options[PlayerB.value].text][randAttack].GetLastAction() == "Defend")
-                teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)current.GetAttack() / 2, false);
-            else
-                teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)current.GetAttack(), false);
+            if (current.GetName() == currentA.GetName() && teams[PlayerB.options[PlayerB.value].text].Count != 0)
+            {
+                int randAttack = Random.Range(0, teams[PlayerB.options[PlayerB.value].text].Count - 1);
+                int randDodge = Random.Range(0, (int)maxSPD);
 
-            outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Attack on " + teams[PlayerB.options[PlayerB.value].text][randAttack].GetName();
+                if (randDodge <= teams[PlayerB.options[PlayerB.value].text][randAttack].GetSpeed())
+                    outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Attack on " + teams[PlayerB.options[PlayerB.value].text][randAttack].GetName() + " that dodges it!!";
 
-        }
-        else if (teams[PlayerA.options[PlayerA.value].text].Count != 0)
-        {
-            int randAttack = Random.Range(0, teams[PlayerA.options[PlayerA.value].text].Count - 1);
+                else
+                {
+                    if (teams[PlayerB.options[PlayerB.value].text][randAttack].GetLastAction() == "Defend")
+                        teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)current.GetAttack() / 2, false);
+                    else
+                        teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)current.GetAttack(), false);
 
-            if (teams[PlayerA.options[PlayerA.value].text][randAttack].GetLastAction() == "Defend")
-                teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)current.GetAttack() / 2, false);
-            else
-                teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)current.GetAttack(), false);
+                    outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Attack on " + teams[PlayerB.options[PlayerB.value].text][randAttack].GetName();
 
-            outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Attack on " + teams[PlayerA.options[PlayerA.value].text][randAttack].GetName();
+                }
 
-        }
+            }
+            else if (teams[PlayerA.options[PlayerA.value].text].Count != 0)
+            {
+                int randAttack = Random.Range(0, teams[PlayerA.options[PlayerA.value].text].Count - 1);
+                int randDodge = Random.Range(0, (int)maxSPD);
+
+                if (randDodge <= teams[PlayerA.options[PlayerA.value].text][randAttack].GetSpeed())
+                    outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Attack on " + teams[PlayerA.options[PlayerA.value].text][randAttack].GetName() + " that dodges it!!";
+
+                else
+                {
+                    if (teams[PlayerA.options[PlayerA.value].text][randAttack].GetLastAction() == "Defend")
+                        teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)current.GetAttack() / 2, false);
+                    else
+                        teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)current.GetAttack(), false);
+
+                    outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Attack on " + teams[PlayerA.options[PlayerA.value].text][randAttack].GetName();
+                }
+            }
 
     }
 
