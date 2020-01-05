@@ -698,23 +698,26 @@ public class GameManager : MonoBehaviour
             float to_levelup = 0.0f;
             bool levelup = true;
 
-            while (!force_level && levelup && currentA.GetLevel() != maxLevel)
+            if (!force_level && currentA.GetLevel() != maxLevel)
             {
-                // for this new level
-                to_levelup = Mathf.Pow(50 * 1.2f, currentA.GetLevel());
-
-                if (currentA.GetXP() > to_levelup)
-                    currentA.ModifyLevel(1);
-
-                // up until this level
-                float total_XP = 0.0f;
-
-                for(uint i = 0; i < currentA.GetLevel(); ++i)
+                while (levelup)
                 {
-                    total_XP += Mathf.Pow(50 * 1.2f, i);
-                }
+                    // for this new level
+                    to_levelup = Mathf.Pow(50 * 1.2f, currentA.GetLevel());
 
-                levelup = currentA.GetXP() > total_XP;
+                    if (currentA.GetXP() >= to_levelup)
+                        currentA.ModifyLevel(1);
+
+                    // up until this level
+                    float total_XP = 0.0f;
+
+                    for (uint i = 0; i < currentA.GetLevel(); ++i)
+                    {
+                        total_XP += Mathf.Pow(50 * 1.2f, i);
+                    }
+
+                    levelup = total_XP + Mathf.Pow(50 * 1.2f, currentA.GetLevel()) <= total_XP + currentA.GetXP();
+                }
             }
 
             }

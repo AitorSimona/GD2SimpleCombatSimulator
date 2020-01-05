@@ -10,6 +10,7 @@ There is no formal installation process, just play around with it, some tips:
 Set a number of rounds, deactivate player control and click play, AI vs AI battles will be simulated.
 Else , control any player or both and just step simulation (remember you can choose actions below)
 
+To close app, just press Alt+F4 (killing the process).
 
 MIT License
 
