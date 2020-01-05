@@ -34,12 +34,18 @@ public class CharacterList
 
     public class Character
     {
-        public Character(string given_name, uint hp, uint atk, uint rge, uint sta, int mana, uint spd, int xp, Item it, Spell sp,uint lvl = 1, bool mage = false)
+        public Character(bool ally,string given_name, uint hp, uint atk, uint rge, uint sta, int mana, uint spd, int xp, Item it, Spell sp,uint lvl = 1, bool mage = false)
         {
+            // 
+            bool TESTS = false;
+            int desired_level = 1;
+            //
+
             name = given_name;
             HP = (int)hp;
             maxHP = maxHPref = hp;
             attack = atk;
+            maxATKref = (int)attack;
             range = rge;
             stamina = (int)sta;
             maxSTA = maxSTAref = sta;
@@ -57,11 +63,37 @@ public class CharacterList
             item = it;
             XP = xp;
 
-            // Uncomment to force level (remember to set force_level var in game manager to true)
-            //ModifyLevel(19);
-
-
             ModifyLevel(0);
+            // Uncomment to force level (remember to set force_level var in game manager to true)
+
+            //for (uint i = 0; i < desired_level - 1; ++i)
+            //{
+            //    ModifyLevel(1);
+            //}
+
+            // Uncomment stuff to force allies attributes
+            if (ally && TESTS)
+            {
+                int num = 15;
+
+                //HP = num;
+                //maxHP = (uint)num;
+                //maxHPref = (uint)num;
+
+                //attack = (uint)num;
+                //maxATKref = num;
+
+                //mana = num;
+                //maxMana = num;
+                //maxManaref = num;
+
+                //stamina = num;
+                //maxSTA = (uint)num;
+                //maxSTAref = (uint)num;
+
+                speed = (uint)num;
+                maxSPDref = num;
+            }
         }
 
         public void ModifyHP(int value, bool add)
@@ -95,66 +127,78 @@ public class CharacterList
 
         public void ModifyLevel(uint value)
         {
-            // value will always be 1 (except when forcing a certain level)
+            // value will always be 1 
+            // all commented stuff was part of a previous iteration
 
-            if(name == "protagonist")
+            if(name == "Protagonist")
             {
                 // HP
-                HP++;
-                maxHP++;
-
-                // attack
-                if (level == 3 || level == 6 || level == 9 || level == 12
-                    || level == 15 || level == 18 || level == 20)
-                    attack++;
-
-                // Stamina
-                if (level == 1 || level == 3 || level == 5 || level == 7
-                 || level == 9 || level == 11 || level == 13 || level == 15 || level == 17
-                 || level == 19)
-                    stamina++;
-
-                // Speed
-                if (level == 5 || level == 10 || level == 15 || level == 20)
-                    speed++;
-            }
-            else if(name == "secondary1")
-            {
-                HP += 1;
-                maxHP += 1;
-
-                // attack
-                if (level == 4 || level == 5 || level == 9 || level == 10
-                    || level == 14 || level == 15)
-                    attack++;
-
-                if (level == 19 || level == 20)
-                    attack += 2;
-
-                // Stamina
-                if (level == 1 || level == 2 || level == 3 || level == 6
-                 || level == 7 || level == 8 || level == 11 || level == 12 || level == 13
-                 || level == 16 || level == 17 || level == 18)
-                    stamina++;
-
-                // Speed
-                if (level == 5 || level == 10 || level == 15)
-                    speed++;
-            }
-            else
-            {
-                mana++;
-                maxMana++;
-
-                if (level < 13)
+                if (level < 5 || level > 15)
                 {
                     HP += 1;
                     maxHP += 1;
                 }
 
                 // attack
-                if (level == 1 || level == 3 || level == 5 || level == 7
-                    || level == 9 || level == 11 || level == 15 || level == 19)
+                if (level == 3 || level == 6 /*|| level == 9*/ || level == 12
+                    || level == 15 /*|| level == 18*/ || level == 20)
+                    attack++;
+
+                // Stamina
+                if (level == 1 || level == 3 || level == 5 /*|| level == 7*/ || level == 10
+                 /*|| level == 9 || level == 11*/ || level == 13 /*|| level == 15 || level == 17*/ || level == 16
+                 || level == 19)
+                {
+                    stamina++;
+                    maxSTA++;
+                }
+
+                // Speed
+                if (level == 5 || level == 10 /*|| level == 15*/ || level == 20)
+                    speed++;
+            }
+            else if(name == "Secondary1")
+            {
+                if (level < 5 || level > 15)
+                {
+                    HP += 1;
+                    maxHP += 1;
+                }
+                // attack
+                if (level == 4 || level == 5 /*|| level == 9*/ || level == 10
+                    /*|| level == 14*/ || level == 15)
+                    attack++;
+
+                if (level == 19)
+                    attack += 2;
+
+                // Stamina
+                if (level == 1 /*|| level == 2*/ || level == 3 || level == 6 || level == 9
+                 /*|| level == 7 || level == 8 || level == 11*/ || level == 12 /*|| level == 13*/ || level == 15
+                 /*|| level == 16 || level == 17*/ || level == 18)
+                {
+                    stamina++;
+                    maxSTA++;
+                }
+
+                // Speed
+                if (level == 5 /*|| level == 10*/ || level == 15)
+                    speed++;
+            }
+            else if (name == "Secondary2")
+            {
+                mana++;
+                maxMana++;
+
+                if (level < 5 || level > 15)
+                {
+                    HP += 1;
+                    maxHP += 1;
+                }
+
+                // attack
+                if (level == 1 /*|| level == 3*/ || level == 5 /*|| level == 7*/ || level == 10
+                    /*|| level == 9 || level == 11*/ || level == 15 || level == 19)
                     attack++;
             }
 
@@ -350,15 +394,15 @@ public class CharacterList
         Spell none = new Spell("none", 0, 0);
 
         Spell bolt = new Spell("Bolt", 7, 7);
-        Spell coneofcold = new Spell("ConeOfCold", 7, 7);
+        Spell coneofcold = new Spell("ConeOfCold", 0, 5);
 
-        Character character1 = new Character("Protagonist",5,3,5,5,0,3,0,fire_bomb, none);
+        Character character1 = new Character(true,"Protagonist",5,3,5,5,0,3,0,fire_bomb, none);
         Team.Add(character1);
 
-        Character character2 = new Character("Secondary1",10,5,1,3,0,2,0,potion,none);
+        Character character2 = new Character(true,"Secondary1",10,5,1,3,0,2,0,potion,none);
         Team.Add(character2);
 
-        Character character3 = new Character("Secondary2",5,7,3,1,5,1,0,potion,coneofcold,1,true);
+        Character character3 = new Character(true,"Secondary2",5,7,3,2,5,1,0,potion,coneofcold,1,true);
         Team.Add(character3);
 
         Debug.Log("Created Awesome characters: Team A");
@@ -375,16 +419,16 @@ public class CharacterList
         Spell coneofcold = new Spell("ConeOfCold", 7, 7);
 
         // Fill team here
-        Character character1 = new Character("Antagonist",50,10,3,3,10,2,3000,fire_bomb, bolt, 1, true);
+        Character character1 = new Character(false,"Antagonist",50,10,3,3,10,2,3000,fire_bomb, bolt, 1, true);
         Team.Add(character1);
 
-        Character character2 = new Character("Minion1",8,4,1,3,0,2,200, potion, none);
+        Character character2 = new Character(false,"Minion1",12,4,1,3,0,2,200, potion, none);
         Team.Add(character2);
 
-        Character character3 = new Character("Minion2",3,2,5,5,0,3,300, potion, none);
+        Character character3 = new Character(false,"Minion2",8,2,5,5,0,3,300, potion, none);
         Team.Add(character3);
 
-        Character character4 = new Character("Minion3",3,5,3,1,5,1,500,potion, coneofcold,1, true);
+        Character character4 = new Character(false,"Minion3",8,5,3,2,5,1,500,potion, coneofcold,1, true);
         Team.Add(character4);
 
         Debug.Log("Created Awesome characters: Team B");

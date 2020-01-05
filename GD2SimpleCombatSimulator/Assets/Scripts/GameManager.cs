@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
     int maxLevel = 20;
 
     // IMPORTANT: disables level progression if true
-    bool force_level = true;
+    bool force_level = false;
 
     public InputField iters;
 
@@ -45,7 +45,7 @@ public class GameManager : MonoBehaviour
     bool playing = false;
 
     uint maxSPD = 10;
-    uint STACostperatk = 3;
+    uint STACostperatk = 2;
     uint STARecoveredperturn = 1;
 
     // --- Characters ---
@@ -110,6 +110,8 @@ public class GameManager : MonoBehaviour
         spellB.name = "Cone of Cold";
         spellB.damage = 0;
         spellB.mana_cost = 5;
+
+        UpdateCurrentCharacters();
     }
 
     // Update is called once per frame
@@ -333,36 +335,6 @@ public class GameManager : MonoBehaviour
         List<string> actionsB = new List<string>();
 
         // --- Create actions ---
-        actionsA.Add("Attack");
-        actionsA.Add("Defend");
-        actionsA.Add("Use Item");
-
-        actionsB.Add("Attack");
-        actionsB.Add("Defend");
-        actionsB.Add("Use Item");
-
-        if (currentA.GetMage())
-            actionsA.Add("Cast Spell");
-
-        if (currentB.GetMage())
-            actionsB.Add("Cast Spell");
-
-        ActionA.AddOptions(actionsA);
-        ActionB.AddOptions(actionsB);
-    }
-
-    void SimulateCombat()
-    {
-        CheckDead();
-
-        // --- Update actions ---
-        ActionA.ClearOptions();
-        ActionB.ClearOptions();
-
-        List<string> actionsA = new List<string>();
-        List<string> actionsB = new List<string>();
-
-        // --- Create actions ---
 
         // A
         if (currentA.GetStamina() >= STACostperatk)
@@ -373,7 +345,7 @@ public class GameManager : MonoBehaviour
         if (currentA.GetItemUsed() == false)
             actionsA.Add("Use Item");
 
-        if (currentA.GetMage())
+        if (currentA.GetMage() && currentA.GetMana() >= currentA.GetSpell().mana_cost)
             actionsA.Add("Cast Spell");
         // B
 
@@ -385,16 +357,94 @@ public class GameManager : MonoBehaviour
         if (currentB.GetItemUsed() == false)
             actionsB.Add("Use Item");
 
-        if (currentB.GetMage())
+        if (currentB.GetMage() && currentB.GetMana() >= currentB.GetSpell().mana_cost)
+            actionsB.Add("Cast Spell");
+
+        ActionA.AddOptions(actionsA);
+        ActionB.AddOptions(actionsB);
+    }
+
+    void SimulateCombat()
+    {
+        CheckDead();
+
+        int valueA = ActionA.value;
+        int valueB = ActionB.value;
+
+        // --- Update actions ---
+        ActionA.ClearOptions();
+        ActionB.ClearOptions();
+
+        List<string> actionsA = new List<string>();
+        List<string> actionsB = new List<string>();
+
+        // --- Create actions ---
+
+        // A
+
+        if (currentA.GetStamina() >= STACostperatk)
+            actionsA.Add("Attack");
+
+        actionsA.Add("Defend");
+
+        if (currentA.GetItemUsed() == false)
+            actionsA.Add("Use Item");
+
+        if (currentA.GetMage() && currentA.GetMana() >= currentA.GetSpell().mana_cost)
+            actionsA.Add("Cast Spell");
+        // B
+
+        if (currentB.GetStamina() >= STACostperatk)
+            actionsB.Add("Attack");
+
+        actionsB.Add("Defend");
+
+        if (currentB.GetItemUsed() == false)
+            actionsB.Add("Use Item");
+
+        if (currentB.GetMage() && currentB.GetMana() >= currentB.GetSpell().mana_cost)
             actionsB.Add("Cast Spell");
 
         int randA = Random.Range(0, actionsA.Count-1);
         int randB = Random.Range(0, actionsB.Count-1);
 
+        ActionA.AddOptions(actionsA);
+        ActionB.AddOptions(actionsB);
+
         if (controlA.isOn == true)
-            randA = ActionA.value;
+        {
+            randA = valueA;
+        }
+
+        if (ActionA.options[randA].text == "Attack")
+            randA = 0;
+
+        else if (ActionA.options[randA].text == "Defend")
+            randA = 1;
+
+        else if (ActionA.options[randA].text == "Use Item")
+            randA = 2;
+
+        else if (ActionA.options[randA].text == "Cast Spell")
+            randA = 3;
+
         if (controlB.isOn == true)
-            randB = ActionB.value;
+        {
+            randB = valueB;
+        }
+
+
+        if (ActionB.options[randB].text == "Attack")
+            randB = 0;
+
+        else if (ActionB.options[randB].text == "Defend")
+            randB = 1;
+
+        else if (ActionB.options[randB].text == "Use Item")
+            randB = 2;
+
+        else if (ActionB.options[randB].text == "Cast Spell")
+            randB = 3;
 
         currentA.SetLastAction("none");
 
@@ -443,7 +493,7 @@ public class GameManager : MonoBehaviour
                         {
                             int randAttack = Random.Range(0, teams[PlayerB.options[PlayerB.value].text].Count - 1);
 
-                            if (currentA.GetSpell().name != "ConeOfCold")
+                            if (currentA.GetSpell().name == "ConeOfCold")
                             {
                                 teams[PlayerB.options[PlayerB.value].text][randAttack].SetFreezed(true);
                             }
@@ -455,15 +505,11 @@ public class GameManager : MonoBehaviour
                                     teams[PlayerB.options[PlayerB.value].text][randAttack].ModifyHP((int)currentA.GetSpell().damage, false);
                             }
 
+                            outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Spell: " + currentA.GetSpell().name + " against" + teams[PlayerB.options[PlayerB.value].text][randAttack].GetName();
 
                             currentA.ModifyMana((int)currentA.GetSpell().mana_cost);
-
-
                         }
-
-                        if (currentA.GetMana() >= currentA.GetSpell().mana_cost)
-                            outputText.text = outputText.text + "\n" + currentA.GetName() + "Uses Spell: " + currentA.GetSpell().name;
-                        else
+                        else if (currentA.GetMana() < currentA.GetSpell().mana_cost)
                             outputText.text = outputText.text + "\n" + currentA.GetName() + "Cannot use spell: " + currentA.GetSpell().name;
 
                     }
@@ -524,7 +570,7 @@ public class GameManager : MonoBehaviour
                         {
                             int randAttack = Random.Range(0, teams[PlayerA.options[PlayerA.value].text].Count - 1);
 
-                            if (currentB.GetSpell().name != "ConeOfCold")
+                            if (currentB.GetSpell().name == "ConeOfCold")
                             {
                                 teams[PlayerA.options[PlayerA.value].text][randAttack].SetFreezed(true);
                             }
@@ -536,12 +582,13 @@ public class GameManager : MonoBehaviour
                                     teams[PlayerA.options[PlayerA.value].text][randAttack].ModifyHP((int)currentB.GetSpell().damage, false);
                             }
 
+                            outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Spell: " + currentB.GetSpell().name + " against" + teams[PlayerA.options[PlayerA.value].text][randAttack].GetName();
+
                             currentB.ModifyMana((int)currentB.GetSpell().mana_cost);
                         }
 
-                        if (currentB.GetMana() >= currentB.GetSpell().mana_cost)
-                            outputText.text = outputText.text + "\n" + currentB.GetName() + "Uses Spell: " + currentB.GetSpell().name;
-                        else
+
+                        else if (currentB.GetMana() < currentB.GetSpell().mana_cost)
                             outputText.text = outputText.text + "\n" + currentB.GetName() + "Cannot use spell: " + currentB.GetSpell().name;
 
                     }
@@ -691,6 +738,5 @@ public class GameManager : MonoBehaviour
             }
 
     }
-
 
 }
