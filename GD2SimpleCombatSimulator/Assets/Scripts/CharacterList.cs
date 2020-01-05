@@ -416,7 +416,7 @@ public class CharacterList
         Spell none = new Spell("none", 0, 0);
 
         Spell bolt = new Spell("Bolt", 7, 7);
-        Spell coneofcold = new Spell("ConeOfCold", 7, 7);
+        Spell coneofcold = new Spell("ConeOfCold", 0, 5);
 
         // Fill team here
         Character character1 = new Character(false,"Antagonist",50,10,3,3,10,2,3000,fire_bomb, bolt, 1, true);
